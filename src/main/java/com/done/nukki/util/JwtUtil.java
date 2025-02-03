@@ -1,5 +1,6 @@
 package com.done.nukki.util;
 
+import com.done.nukki.exception.InvalidTokenException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class JwtUtil {
@@ -47,31 +49,36 @@ public class JwtUtil {
             .getTime();
     }
 
+
+    public String extractSocialAccount(String token) {
+        return parseToken(token).getSubject();
+    }
+
     public Claims parseToken(String token) {
-        return Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+        try {
+            return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        } catch (ExpiredJwtException e) {
+            throw new InvalidTokenException("토큰이 만료되었습니다.", e);
+        } catch (MalformedJwtException e) {
+            throw new InvalidTokenException("토큰이 잘못되었습니다.", e);
+        } catch (UnsupportedJwtException e) {
+            throw new InvalidTokenException("지원되지 않는 토큰 형식입니다.", e);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidTokenException("JWT 토큰이 비어 있습니다.", e);
+        }
     }
 
     public boolean validateToken(String token) {
         try {
             parseToken(token);
             return true;
-        } catch (ExpiredJwtException e) {
-            System.out.println("토큰이 만료됨: " + e.getMessage());
-        } catch (MalformedJwtException e) {
-            System.out.println("토큰이 잘못됨: " + e.getMessage());
-        } catch (UnsupportedJwtException e) {
-            System.out.println("지원되지 않는 토큰 형식: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            System.out.println("JWT 토큰이 비어 있음: " + e.getMessage());
+        } catch (InvalidTokenException e) {
+            throw e;
         }
-        return false;
     }
 
-    public String extractSocialAccount(String token) {
-        return parseToken(token).getSubject();
-    }
 }

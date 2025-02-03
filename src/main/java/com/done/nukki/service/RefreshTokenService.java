@@ -1,13 +1,11 @@
 package com.done.nukki.service;
 
+import com.done.nukki.dto.res.TokenRefreshResDto;
 import com.done.nukki.entity.RefreshToken;
 import com.done.nukki.entity.Member;
+import com.done.nukki.exception.InvalidTokenException;
 import com.done.nukki.repository.RefreshTokenRepository;
 import com.done.nukki.util.JwtUtil;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -51,39 +49,34 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
-    public Claims validateRefreshToken(String token) {
-        try {
-            // 1. 데이터베이스에서 RefreshToken 조회
-            RefreshToken storedToken = findByToken(token).orElseThrow(() -> new RuntimeException("Invalid or expired refresh token"));
+    public TokenRefreshResDto refreshAccessToken(String refreshToken) {
 
-            // 2. RefreshToken과 연결된 사용자 조회
-            Member member = memberService.findById(storedToken.getMember().getId()).orElseThrow(() -> new RuntimeException("Member not found"));
-
-            // 3. 클라이언트가 제공한 토큰과 데이터베이스의 토큰 일치 여부 확인
-            if (!storedToken.getToken().equals(token)) {
-                throw new RuntimeException("Token mismatch between database and provided token");
-            }
-
-            // 4. JWT 파싱 - 만료 시간 검증
-            Claims claims = jwtUtil.parseToken(token);
-
-            // 5. 토큰의 subject(socialAccount)가 데이터베이스의 사용자와 일치하는지 검증
-            if (!claims.getSubject().equals(member.getSocialAccount())) {
-                throw new JwtException("Token does not belong to the authenticated Member");
-            }
-
-            return claims;
-
-        } catch (ExpiredJwtException e) {
-            System.out.println("Expired token: e = " + e);
-            throw e; // ExpiredJwtException 그대로 던짐
-        } catch (JwtException | IllegalArgumentException e) {
-            System.out.println("Invalid token: e = " + e);
-            throw e; // JwtException 그대로 던짐
+        if (!jwtUtil.validateToken(refreshToken)) {
+            throw new InvalidTokenException("Invalid or expired refresh token.");
         }
+
+        RefreshToken storedToken = findByToken(refreshToken) .orElseThrow(() -> new InvalidTokenException("Invalid or expired refresh token"));
+
+        Member member = storedToken.getMember();
+
+        String tokenSocialAccount = jwtUtil.extractSocialAccount(refreshToken);
+        if (!tokenSocialAccount.equals(member.getSocialAccount())) {
+            throw new InvalidTokenException("Token does not match with user.");
+        }
+
+        if (!"normal".equals(member.getStatus())) {
+            throw new InvalidTokenException("Inactive or banned user.");
+        }
+
+        String newAccessToken = jwtUtil.generateToken(
+            true,
+            member.getSocialAccount(),
+            member.getProvider(),
+            member.getStatus(),
+            "ROLE_" + member.getStatus()
+        );
+
+        return new TokenRefreshResDto(newAccessToken);
     }
 
-    /*public String refreshAccessToken(String refreshToken) {
-        validateRefreshToken(refreshToken);
-    }*/
 }

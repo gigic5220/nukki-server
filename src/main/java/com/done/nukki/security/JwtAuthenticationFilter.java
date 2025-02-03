@@ -1,8 +1,10 @@
 package com.done.nukki.security;
 
 import com.done.nukki.entity.MemberDetailsWithMemberEntity;
+import com.done.nukki.exception.InvalidTokenException;
 import com.done.nukki.service.MemberService;
 import com.done.nukki.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,16 +38,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         System.out.println("doFilterInternal() request.getRequestURL(): " + request.getRequestURL());
+
         String token = extractToken(request);
-        if (token != null && jwtUtil.validateToken(token)) {
-            String socialAccount = jwtUtil.extractSocialAccount(token);
+        try {
+            if (token != null) {
+                Claims claims = jwtUtil.parseToken(token);
 
-            MemberDetailsWithMemberEntity memberDetailsWithMemberEntity = new MemberDetailsWithMemberEntity(memberService.findBySocialAccount(socialAccount).orElseThrow(() -> new RuntimeException("User not found")));
+                String socialAccount = claims.getSubject();
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(memberDetailsWithMemberEntity, null, memberDetailsWithMemberEntity.getAuthorities());
+                MemberDetailsWithMemberEntity memberDetailsWithMemberEntity = new MemberDetailsWithMemberEntity(memberService.findBySocialAccount(socialAccount).orElseThrow(() -> new RuntimeException("User not found")));
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(memberDetailsWithMemberEntity, null, memberDetailsWithMemberEntity.getAuthorities());
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (InvalidTokenException e) {
+            System.out.println("JWT 검증 실패: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid or expired token");
+            return;
         }
+
         filterChain.doFilter(request, response);
     }
+
 }
