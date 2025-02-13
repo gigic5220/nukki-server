@@ -48,17 +48,17 @@ public class SecurityConfig {
             .cors(cors -> cors
                 .configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000")); // 허용할 Origin
-                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE")); // 허용할 HTTP 메서드
-                    config.setAllowedHeaders(List.of("*")); // 허용할 헤더
+                    config.setAllowedOrigins(List.of("http://localhost:3000"));
+                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+                    config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
                     return config;
                 })
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                "/error",   // spring boot error 발생 시 자체 error page를 보여주기 위해 permitAll 설정
-                "/auth/**"
+                "/error",
+                "/api/v1/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
