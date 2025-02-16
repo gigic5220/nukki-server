@@ -6,7 +6,6 @@ import com.done.nukki.dto.res.LoginResDto;
 import com.done.nukki.dto.res.TokenRefreshResDto;
 import com.done.nukki.service.AuthService;
 import com.done.nukki.service.RefreshTokenService;
-import com.done.nukki.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,14 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
 
     @Autowired
-    public AuthController(JwtUtil jwtUtil, AuthService authService, RefreshTokenService refreshTokenService) {
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService) {
         this.authService = authService;
         this.refreshTokenService = refreshTokenService;
     }

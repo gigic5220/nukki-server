@@ -9,9 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class CreateNukkiImageReqDto {
 
-    @NotNull(message = "Member ID는 필수입니다.")
-    private Integer memberId;
-
     @NotBlank(message = "이미지 URL은 필수입니다.")
     @Pattern(
         regexp = "^(https?://)?[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/[a-zA-Z0-9@:%._+~#=/?&-]*)?$",

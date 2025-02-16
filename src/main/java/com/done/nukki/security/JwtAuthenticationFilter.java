@@ -38,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         System.out.println("doFilterInternal() request.getRequestURL(): " + request.getRequestURL());
-
         String token = extractToken(request);
         try {
             if (token != null) {
@@ -46,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String socialAccount = claims.getSubject();
 
-                MemberDetailsWithMemberEntity memberDetailsWithMemberEntity = new MemberDetailsWithMemberEntity(memberService.findBySocialAccount(socialAccount).orElseThrow(() -> new RuntimeException("User not found")));
+                MemberDetailsWithMemberEntity memberDetailsWithMemberEntity = new MemberDetailsWithMemberEntity(memberService.findBySocialAccount(socialAccount));
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(memberDetailsWithMemberEntity, null, memberDetailsWithMemberEntity.getAuthorities());
 

@@ -1,6 +1,7 @@
 package com.done.nukki.util;
 
 import com.done.nukki.dto.ApiResponseDto;
+import com.done.nukki.exception.NotFoundException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
@@ -12,14 +13,20 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class ApiExceptionHandler {
 
     @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<ApiResponseDto<Object>> handleExpiredJwtException(ExpiredJwtException ex) {
-        ApiResponseDto<Object> errorResponse = ApiResponseDto.error(HttpStatus.UNAUTHORIZED.value(), "Refresh token expired");
+    public ResponseEntity<ApiResponseDto<Object>> handleExpiredJwtException(ExpiredJwtException exception) {
+        ApiResponseDto<Object> errorResponse = ApiResponseDto.error(HttpStatus.UNAUTHORIZED.value(), "토큰 만료");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleMemberNotFoundException(NotFoundException exception) {
+        ApiResponseDto<Object> errorResponse = ApiResponseDto.error(HttpStatus.NOT_FOUND.value(), "사용자 없음");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ApiResponseDto<Object>> handleJwtException(JwtException ex) {
-        ApiResponseDto<Object> errorResponse = ApiResponseDto.error(HttpStatus.UNAUTHORIZED.value(), "Invalid refresh token");
+        ApiResponseDto<Object> errorResponse = ApiResponseDto.error(HttpStatus.UNAUTHORIZED.value(), "토큰 오류");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
