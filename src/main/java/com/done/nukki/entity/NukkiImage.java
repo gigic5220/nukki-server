@@ -67,9 +67,9 @@ public class NukkiImage {
     @Column()
     private LocalDateTime deleted;
 
-    public NukkiImage(CreateNukkiImageReqDto dto, Member member) {
+    public NukkiImage(CreateNukkiImageReqDto dto, Member member, String url) {
         this.member = member;
-        this.url = dto.getUrl();
+        this.url = url;
         this.name = dto.getName();
         this.hit = 0;
         this.like = 0;

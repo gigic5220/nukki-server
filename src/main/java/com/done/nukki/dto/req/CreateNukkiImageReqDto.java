@@ -4,9 +4,11 @@ import jakarta.validation.constraints.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class CreateNukkiImageReqDto {
 
     @NotBlank(message = "이미지 URL은 필수입니다.")
